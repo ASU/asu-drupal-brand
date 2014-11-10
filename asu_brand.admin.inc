@@ -40,6 +40,29 @@ function asu_brand_get_block_configure_form($delta) {
         '#description' => t('The default is %default. For a list of template keys, visit <a href="@template_path">@template_path</a>.', array('%default' => ASU_BRAND_HEADER_TEMPLATE_DEFAULT, '@template_path' => url('https://asu.edu/asuthemes/' . variable_get('asu_brand_header_version', ASU_BRAND_HEADER_VERSION_DEFAULT) . '/heads/'))),
         '#required' => TRUE,
       );
+      
+      $form['asu_brand']['gtm'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Override Google Tag Manager (GTM) settings'),
+          '#description' => t('ASU Universal GTM settings are automatically set. Overriding is not common.'),
+          '#collapsible' => TRUE,
+          '#collapsed' => TRUE,
+          // This #states rule says that the 'gtm' fieldset should only
+          // be shown if the 'asu_brand_header_version' form element is 4.2 or higher.
+          '#states' => array(
+              'visible' => array(
+                  ':input[name="asu_brand_header_version"]' => asu_brand_get_gtm_fieldset_visible_options(),
+              ),
+          ),
+      );
+      
+      $form['asu_brand']['gtm']['asu_brand_gtm_override'] = array(
+          '#type' => 'textarea',
+          '#title' => t('Custom GTM Script'),
+          '#default_value' => variable_get('asu_brand_gtm_override', ''),
+          '#description' => t('This script should be provided by the ASU google Analytics Administrator.'),
+      );
+
       break;
       
       case 'asu_brand_footer':
@@ -105,6 +128,19 @@ function asu_brand_get_version_options($reset = FALSE) {
       watchdog('asu_brand', $e, array(), WATCHDOG_ERROR);
     }
   }
-    
+
+  return $options;
+}
+
+function asu_brand_get_gtm_fieldset_visible_options() {
+  $options = array();
+  $header_versions = asu_brand_get_version_options();
+  if (is_array($header_versions)) {
+    foreach ($header_versions as $key => $value) {
+      if (floatval($key) >= ASU_BRAND_FIRST_GTM_SUPPORTED_VERSION) {
+        $options[] = array('value' => strval($key));
+      }
+    }
+  }
   return $options;
 }
