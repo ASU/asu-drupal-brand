@@ -9,19 +9,27 @@ function asu_brand_get_block_configure_form($delta) {
     '#title' => t('ASU Brand settings'),
     '#description' => t('This block is cached for %lifetime. To update now, <a href="@link">clear the cache</a>.', array('%lifetime' => format_interval(ASU_BRAND_CACHE_LIFETIME), '@link' => url('admin/config/development/performance'))),
   );
-  $form['asu_brand']['asu_brand_header_version'] = array(
-    '#type' => 'select',
-    '#title' => t('ASU header version'),
-    '#description' => t('Select the version of the ASU header. <strong>This setting is shared between all ASU Brand blocks.</strong>'),
-    '#options' => asu_brand_get_version_options(),
-    '#default_value' => variable_get('asu_brand_header_version', ASU_BRAND_HEADER_VERSION_DEFAULT),
-  );
   $form['asu_brand']['asu_brand_header_basepath'] = array(
     '#type' => 'textfield',
     '#title' => t('ASU theme basepath'),
     '#default_value' => variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT),
     '#description' => t('This setting is shared between all ASU Brand blocks. The default is %default. To use a local path, use %local_path', array('%default' => ASU_BRAND_HEADER_BASEPATH_DEFAULT, '%local_path' => '/afs/asu.edu/www/asuthemes')),
     '#required' => TRUE,
+    '#ajax' => array(
+            'event' => 'change',
+            'callback' => 'asu_brand_basepath_ajax_callback',
+            'wrapper' => 'dropdown_header_version_replace',
+        ),
+  );
+  $form['asu_brand']['asu_brand_header_version'] = array(
+      '#type' => 'select',
+      '#title' => t('ASU header version'),
+      '#description' => t('Select the version of the ASU header. <strong>This setting is shared between all ASU Brand blocks.</strong>'),
+      '#options' => asu_brand_get_version_options(FALSE, (!empty($form_state['values']['asu_brand_header_basepath'])) ? $form_state['values']['asu_brand_header_basepath'] : variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT)),
+      '#default_value' => variable_get('asu_brand_header_version', ASU_BRAND_HEADER_VERSION_DEFAULT),
+      '#required' => TRUE,
+      '#prefix' => '<div id="dropdown_header_version_replace">',
+      '#suffix' => '</div>',
   );
   $form['asu_brand']['asu_brand_preview_pages'] = array(
     '#type' => 'textarea',
@@ -84,21 +92,49 @@ function asu_brand_get_block_configure_form($delta) {
 }
 
 /**
+ * Implements hook_form_alter().
+ * Rebuild the version options and deselect item.
+ */
+function asu_brand_form_block_admin_configure_alter(&$form, $form_state) {
+  if ($form['module']['#value'] == 'asu_brand' && $form['delta']['#value'] == 'asu_brand_header') {
+    // if form state is set (ajax call) then set the header version options to match the base path.
+    if (isset($form_state['values'])) {
+      $options = asu_brand_get_version_options(FALSE, $form_state['values']['asu_brand_header_basepath']);
+      $form['settings']['asu_brand']['asu_brand_header_version']['#options'] = $options;
+    }
+  }
+}
+
+/**
+ * Selects just the asu_brand_header_version to be returned for re-rendering
+ * @param array $form
+ * @param array $form_state
+ * @return renderable array (asu_brand_header_version)
+ */
+function asu_brand_basepath_ajax_callback($form, $form_state) {
+  // force user to select header version again as basepath has changed.
+  // available header versions can differ between DEV, QA and PROD.
+  $form['settings']['asu_brand']['asu_brand_header_version']['#value'] = '';
+  return $form['settings']['asu_brand']['asu_brand_header_version'];
+}
+
+
+/**
  * Get the header version options as an associative array in the form of
  * array(
  *   'version' => description text,
  * );
  */
-function asu_brand_get_version_options($reset = FALSE) {
-  $options = &drupal_static(__FUNCTION__);
+function asu_brand_get_version_options($reset = FALSE, $basepath = '') {
+  // disabling the caching of version options to enable sensitivity to basepath changes.
+  //$options = &drupal_static(__FUNCTION__);
   if ($reset || !isset($options)) {
     $options = array('' => t('Select a version'));
     
     // Use internal xml errors to provide user readable errors.
     libxml_use_internal_errors(TRUE);
     try {
-      $items = new SimpleXMLElement(ASU_BRAND_HEADER_VERSION_XML_URL, 0, TRUE);
-  
+      $items = new SimpleXMLElement((($basepath != '') ? $basepath : variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT)).'/headers.xml', 0, TRUE);
       if ($items) {
         foreach ($items->header as $header) {
           $options[(string) $header->version] = t((string) $header->name);
@@ -128,7 +164,6 @@ function asu_brand_get_version_options($reset = FALSE) {
       watchdog('asu_brand', $e, array(), WATCHDOG_ERROR);
     }
   }
-
   return $options;
 }
 
