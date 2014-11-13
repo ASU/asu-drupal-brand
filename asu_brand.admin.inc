@@ -55,13 +55,6 @@ function asu_brand_get_block_configure_form($delta) {
           '#description' => t('ASU Universal GTM settings are automatically set. Overriding is not common.'),
           '#collapsible' => TRUE,
           '#collapsed' => TRUE,
-          // This #states rule says that the 'gtm' fieldset should only
-          // be shown if the 'asu_brand_header_version' form element is 4.2 or higher.
-          '#states' => array(
-              'visible' => array(
-                  ':input[name="asu_brand_header_version"]' => asu_brand_get_gtm_fieldset_visible_options(),
-              ),
-          ),
       );
       
       $form['asu_brand']['gtm']['asu_brand_gtm_override'] = array(
@@ -136,8 +129,14 @@ function asu_brand_get_version_options($reset = FALSE, $basepath = '') {
     try {
       $items = new SimpleXMLElement((($basepath != '') ? $basepath : variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT)).'/headers.xml', 0, TRUE);
       if ($items) {
-        foreach ($items->header as $header) {
-          $options[(string) $header->version] = t((string) $header->name);
+        $brand_module_info = system_get_info('module', $name = 'asu_brand');
+        $brand_module_version = (isset($brand_module_info['version'])) ? $brand_module_info['version'] : null;
+        foreach ($items->gtmheader as $header) {
+          $dep_min = (isset($header->compatibility->brand_module->min)) ? $header->compatibility->brand_module->min : null;
+          $dep_max = (isset($header->compatibility->brand_module->max)) ? $header->compatibility->brand_module->max : null;
+          if (asu_brand_dependancies_met($brand_module_version, $dep_min, $dep_max)) {
+            $options[(string) $header->version] = t((string) $header->name);
+          }
         }
         
         // Save options to variable table in case xml is not available at a later time.
@@ -167,15 +166,26 @@ function asu_brand_get_version_options($reset = FALSE, $basepath = '') {
   return $options;
 }
 
-function asu_brand_get_gtm_fieldset_visible_options() {
-  $options = array();
-  $header_versions = asu_brand_get_version_options();
-  if (is_array($header_versions)) {
-    foreach ($header_versions as $key => $value) {
-      if (floatval($key) >= ASU_BRAND_FIRST_GTM_SUPPORTED_VERSION) {
-        $options[] = array('value' => strval($key));
-      }
-    }
+/**
+ * Checks if passed brand module version meets the minimum
+ *   and maximum versino dependancies
+ * @param string $current_version
+ * @param string $min_version
+ * @param string $mac_version
+ * @return boolean
+ */
+function asu_brand_dependancies_met($current_version, $min_version, $max_version) {
+  if(count($curr_varr = explode('-', $current_version)) < 2) return FALSE;
+  if(count($min_varr = explode('-', $min_version)) < 2) return FALSE;
+  // min check
+  if(floatval($curr_varr[0]) != floatval($min_varr[0])) return FALSE;
+  if(floatval($curr_varr[1]) < floatval($min_varr[1])) return FALSE;
+  // max check (optional)
+  if ($max_version) {
+    if(count($max_varr = explode('-', $max_version)) < 2) return FALSE;
+    if(floatval($curr_varr[0]) != floatval($max_varr[0])) return FALSE;
+    if(floatval($curr_varr[1]) < floatval($max_varr[1])) return FALSE;
   }
-  return $options;
+  // all checks successful
+  return TRUE;
 }

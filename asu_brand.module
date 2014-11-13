@@ -14,7 +14,6 @@ define('ASU_BRAND_HEADER_TEMPLATE_DEFAULT', 'default');
 define('ASU_BRAND_FOOTER_COLOR_DEFAULT', '');
 define('ASU_BRAND_CACHE_LIFETIME', 172800);
 define('ASU_BRAND_PREVIEW_PAGES_DEFAULT', "system/ajax/*\npanels/ajax/*");
-define('ASU_BRAND_FIRST_GTM_SUPPORTED_VERSION', 4.2);
 
 /**
  * Implements hook_block_info().
@@ -137,12 +136,6 @@ function asu_brand_block_view($delta = '') {
  * @see drupal_render_page()
  */
 function asu_brand_page_alter(&$page) {
-  // GTM available for versions 4.2 and higher
-  $header_version = variable_get('asu_brand_header_version', ASU_BRAND_HEADER_VERSION_DEFAULT);
-  if ( floatval($header_version) < ASU_BRAND_FIRST_GTM_SUPPORTED_VERSION ) {
-    return;
-  }
-
   // Call sequence:
   // - drupal_render_page()
   //   - hook_page_alter()
