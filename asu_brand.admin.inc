@@ -4,43 +4,47 @@
  * ASU Brand administration functions.
  */
 function asu_brand_get_block_configure_form($delta) {
+  
   $form['asu_brand'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('ASU Brand settings'),
-    '#description' => t('This block is cached for %lifetime. To update now, <a href="@link">clear the cache</a>.', array('%lifetime' => format_interval(ASU_BRAND_CACHE_LIFETIME), '@link' => url('admin/config/development/performance'))),
-  );
-  $form['asu_brand']['asu_brand_header_basepath'] = array(
-    '#type' => 'textfield',
-    '#title' => t('ASU theme basepath'),
-    '#default_value' => variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT),
-    '#description' => t('This setting is shared between all ASU Brand blocks. The default is %default. To use a local path, use %local_path', array('%default' => ASU_BRAND_HEADER_BASEPATH_DEFAULT, '%local_path' => '/afs/asu.edu/www/asuthemes')),
-    '#required' => TRUE,
-    '#ajax' => array(
-            'event' => 'change',
-            'callback' => 'asu_brand_basepath_ajax_callback',
-            'wrapper' => 'dropdown_header_version_replace',
-        ),
-  );
-  $form['asu_brand']['asu_brand_header_version'] = array(
-      '#type' => 'select',
-      '#title' => t('ASU header version'),
-      '#description' => t('Select the version of the ASU header. <strong>This setting is shared between all ASU Brand blocks.</strong>'),
-      '#options' => asu_brand_get_version_options(FALSE, (!empty($form_state['values']['asu_brand_header_basepath'])) ? $form_state['values']['asu_brand_header_basepath'] : variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT)),
-      '#default_value' => variable_get('asu_brand_header_version', ASU_BRAND_HEADER_VERSION_DEFAULT),
-      '#required' => TRUE,
-      '#prefix' => '<div id="dropdown_header_version_replace">',
-      '#suffix' => '</div>',
-  );
-  $form['asu_brand']['asu_brand_preview_pages'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Preview pages'),
-    '#default_value' => variable_get('asu_brand_preview_pages', ASU_BRAND_PREVIEW_PAGES_DEFAULT),
-    '#description' => t('This setting is shared between all ASU Brand blocks.<br />Specify "preview pages" by using their paths. Enter one path per line. The \'*\' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. <front> is the front page.<br />The default is %default.', array('%default' => ASU_BRAND_PREVIEW_PAGES_DEFAULT)),
-    '#required' => TRUE,
+      '#type' => 'fieldset',
+      '#title' => t('ASU Brand settings'),
+      '#description' => t('This block is cached for %lifetime. To update now, <a href="@link">clear the cache</a>.', array('%lifetime' => format_interval(ASU_BRAND_CACHE_LIFETIME), '@link' => url('admin/config/development/performance'))),
   );
   
   switch ($delta) {
-    case 'asu_brand_header':
+    
+    case ASU_BRAND_HEADER_DELTA:
+      
+      $form['asu_brand']['asu_brand_header_basepath'] = array(
+          '#type' => 'textfield',
+          '#title' => t('ASU theme basepath'),
+          '#default_value' => variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT),
+          '#description' => t('This setting is shared between all ASU Brand blocks. The default is %default. To use a local path, use %local_path', array('%default' => ASU_BRAND_HEADER_BASEPATH_DEFAULT, '%local_path' => '/afs/asu.edu/www/asuthemes')),
+          '#required' => TRUE,
+          '#ajax' => array(
+              'event' => 'change',
+              'callback' => 'asu_brand_basepath_ajax_callback',
+              'wrapper' => 'dropdown_header_version_replace',
+          ),
+      );
+      $form['asu_brand']['asu_brand_header_version'] = array(
+          '#type' => 'select',
+          '#title' => t('ASU header version'),
+          '#description' => t('Select the version of the ASU header. <strong>This setting is shared between all ASU Brand blocks.</strong>'),
+          '#options' => asu_brand_get_version_options(FALSE, (!empty($form_state['values']['asu_brand_header_basepath'])) ? $form_state['values']['asu_brand_header_basepath'] : variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT)),
+          '#default_value' => variable_get('asu_brand_header_version', ASU_BRAND_HEADER_VERSION_DEFAULT),
+          '#required' => TRUE,
+          '#prefix' => '<div id="dropdown_header_version_replace">',
+          '#suffix' => '</div>',
+      );
+      $form['asu_brand']['asu_brand_preview_pages'] = array(
+          '#type' => 'textarea',
+          '#title' => t('Preview pages'),
+          '#default_value' => variable_get('asu_brand_preview_pages', ASU_BRAND_PREVIEW_PAGES_DEFAULT),
+          '#description' => t('This setting is shared between all ASU Brand blocks.<br />Specify "preview pages" by using their paths. Enter one path per line. The \'*\' character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. <front> is the front page.<br />The default is %default.', array('%default' => ASU_BRAND_PREVIEW_PAGES_DEFAULT)),
+          '#required' => TRUE,
+      );
+      
       $form['asu_brand']['asu_brand_header_template'] = array(
         '#type' => 'textfield',
         '#title' => t('ASU header template key'),
@@ -67,13 +71,8 @@ function asu_brand_get_block_configure_form($delta) {
       break;
       
       case 'asu_brand_footer':
-        $form['asu_brand']['asu_brand_footer_color'] = array(
-          '#type' => 'select',
-          '#title' => t('ASU footer color'),
-          '#options' => array('' => 'Black', '_light_grey' => 'Light Grey', '_dark_grey' => 'Dark Grey'),
-          '#default_value' => variable_get('asu_brand_footer_color', ASU_BRAND_FOOTER_COLOR_DEFAULT),
-          '#description' => t('Select the color of the footer.'),
-        );
+        // Footer standardized with no color options
+        $form['asu_brand']['#title'] = t('ASU Brand Footer settings');
         break;
       
       case 'asu_brand_students_footer':

@@ -7,6 +7,10 @@
  * Created: 2011-09-21
  */
 
+/*********************************************************************
+ CONFIG
+*********************************************************************/
+
 define('ASU_BRAND_HEADER_VERSION_XML_URL', 'http://asu.edu/asuthemes/headers.xml');
 define('ASU_BRAND_HEADER_VERSION_DEFAULT', '4.2');
 define('ASU_BRAND_HEADER_BASEPATH_DEFAULT', 'https://asu.edu/asuthemes');
@@ -16,13 +20,19 @@ define('ASU_BRAND_CACHE_LIFETIME', 172800);
 define('ASU_BRAND_PREVIEW_PAGES_DEFAULT', "system/ajax/*\npanels/ajax/*");
 
 /**
+ * Delta of ASU Header block (declared in asu_brand.module)
+ * @var string
+ */
+define('ASU_BRAND_HEADER_DELTA', 'asu_brand_header');
+
+/**
  * Implements hook_block_info().
  */
 function asu_brand_block_info() {
   // Never cache the header with Drupal's caching system because the contents of
   // the block changes based on if the user is logged in. The included header files
   // are cached manually when then block is viewed in _asu_brand_block_header().
-  $blocks['asu_brand_header'] = array(
+  $blocks[ASU_BRAND_HEADER_DELTA] = array(
     'info' => t('ASU Brand: header'),
     'cache' => DRUPAL_NO_CACHE,
   );
@@ -43,7 +53,7 @@ function asu_brand_block_info() {
 function asu_brand_block_configure($delta = '') {
   $form = array();
   switch ($delta) {
-    case 'asu_brand_header':
+    case ASU_BRAND_HEADER_DELTA:
     case 'asu_brand_footer':
     case 'asu_brand_students_footer':
       module_load_include('inc', 'asu_brand', 'asu_brand.admin');
@@ -71,7 +81,8 @@ function asu_brand_block_save($delta = '', $edit = array()) {
     case 'asu_brand_footer':
       variable_set('asu_brand_header_version', $edit['asu_brand_header_version']);
       variable_set('asu_brand_header_basepath', $edit['asu_brand_header_basepath']);
-      variable_set('asu_brand_footer_color', $edit['asu_brand_footer_color']);
+      // No color options on footer anymore
+      //variable_set('asu_brand_footer_color', $edit['asu_brand_footer_color']);
       variable_set('asu_brand_preview_pages', $edit['asu_brand_preview_pages']);
       asu_brand_cache_clear();
       break;

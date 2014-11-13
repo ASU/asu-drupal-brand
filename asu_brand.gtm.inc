@@ -7,16 +7,6 @@
  * @author Chandi Cumaranatunge
  */
 
-/*********************************************************************
- CONFIG
-*********************************************************************/
-
-/**
- * Delta of ASU Header block (declared in asu_brand.module)
- * @var string
- */
-define('ASU_BRAND_HEADER_DELTA', 'asu_brand_header');
-
 
 /*********************************************************************
  DRUPAL HOOKS
