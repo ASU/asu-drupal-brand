@@ -126,11 +126,11 @@ function asu_brand_get_version_options($reset = FALSE, $basepath = '') {
     // Use internal xml errors to provide user readable errors.
     libxml_use_internal_errors(TRUE);
     try {
-      $items = new SimpleXMLElement((($basepath != '') ? $basepath : variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT)).'/headers.xml', 0, TRUE);
+      $items = new SimpleXMLElement((($basepath != '') ? $basepath : variable_get('asu_brand_header_basepath', ASU_BRAND_HEADER_BASEPATH_DEFAULT)).'/gtmheaders.xml', 0, TRUE);
       if ($items) {
         $brand_module_info = system_get_info('module', $name = 'asu_brand');
         $brand_module_version = (isset($brand_module_info['version'])) ? $brand_module_info['version'] : null;
-        foreach ($items->gtmheader as $header) {
+        foreach ($items->header as $header) {
           $dep_min = (isset($header->compatibility->brand_module->min)) ? $header->compatibility->brand_module->min : null;
           $dep_max = (isset($header->compatibility->brand_module->max)) ? $header->compatibility->brand_module->max : null;
           if (asu_brand_dependancies_met($brand_module_version, $dep_min, $dep_max)) {
