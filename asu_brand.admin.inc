@@ -53,6 +53,31 @@ function asu_brand_get_block_configure_form($delta) {
         '#required' => TRUE,
       );
       
+      $form['asu_brand']['site_menu'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Site menu injection'),
+          '#collapsed' => FALSE,
+      );
+      
+      $form['asu_brand']['site_menu']['asu_brand_sitemenu_injection_flag'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Append local site menu into ASU header menu and display in responsive state.'),
+        '#default_value' => variable_get('asu_brand_sitemenu_injection_flag', 1),
+      );
+      
+      $form['asu_brand']['site_menu']['asu_brand_sitemenu_name'] = array(
+          '#type' => 'select',
+          '#title' => t('Menu to inject'),
+          '#description' => t('Select the site menu to inject.'),
+          '#options' => asu_brand_get_site_menu_options(),
+          '#default_value' => variable_get('asu_brand_sitemenu_name', ASU_BRAND_SITE_MENU_NAME_DEFAULT),
+          '#states' => array(
+              'visible' => array(
+                  ':input[name="asu_brand_sitemenu_injection_flag"]' => array('checked' => TRUE),
+              ),
+          ),
+      );
+      
       $form['asu_brand']['gtm'] = array(
           '#type' => 'fieldset',
           '#title' => t('Override Google Tag Manager (GTM) settings'),
@@ -163,6 +188,11 @@ function asu_brand_get_version_options($reset = FALSE, $basepath = '') {
     }
   }
   return $options;
+}
+
+
+function asu_brand_get_site_menu_options() {
+  return menu_get_menus();
 }
 
 /**
