@@ -40,9 +40,9 @@ function asu_brand_init() {
     $menu_array = asu_brand_get_site_menu_array();
     drupal_alter('asu_brand_sitemenu', $menu_array); // Invoke alter
     
-    $js = 'ASUHeader = ASUHeader || {};';
+    $js = 'window.ASUHeader = window.ASUHeader || {};';
     $js .= 'ASUHeader.site_menu = ASUHeader.site_menu || {};';
-    $js .= 'ASUHeader.site_menu.json = '.json_encode($menu_array).';';
+    $js .= 'ASUHeader.site_menu.json = \''.json_encode($menu_array, JSON_HEX_APOS).'\';';
     
     drupal_add_js($js, array('type' => 'inline', 'scope' => 'header', 'group' => JS_THEME, 'weight' => -10));
   }
