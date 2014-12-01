@@ -13,7 +13,7 @@
 
 define('ASU_BRAND_HEADER_VERSION_XML_URL', 'http://asu.edu/asuthemes/headers.xml');
 define('ASU_BRAND_HEADER_VERSION_DEFAULT', '4.2');
-define('ASU_BRAND_HEADER_BASEPATH_DEFAULT', 'https://asu.edu/asuthemes');
+define('ASU_BRAND_HEADER_BASEPATH_DEFAULT', 'http://www.asu.edu/asuthemes');
 define('ASU_BRAND_HEADER_TEMPLATE_DEFAULT', 'default');
 define('ASU_BRAND_FOOTER_COLOR_DEFAULT', '');
 define('ASU_BRAND_CACHE_LIFETIME', 172800);
@@ -24,6 +24,30 @@ define('ASU_BRAND_PREVIEW_PAGES_DEFAULT', "system/ajax/*\npanels/ajax/*");
  * @var string
  */
 define('ASU_BRAND_HEADER_DELTA', 'asu_brand_header');
+
+/**
+ * Default machine name of site menu to inject into the responsive header menu
+ * @var string
+ */
+define('ASU_BRAND_SITE_MENU_NAME_DEFAULT', 'main-menu');
+
+
+/**
+ * Implements hook_init().
+ */
+function asu_brand_init() {
+  if (variable_get('asu_brand_sitemenu_injection_flag', 1)) {
+    $menu_array = asu_brand_get_site_menu_array();
+    drupal_alter('asu_brand_sitemenu', $menu_array); // Invoke alter
+    
+    $js = 'window.ASUHeader = window.ASUHeader || {};';
+    $js .= 'ASUHeader.site_menu = ASUHeader.site_menu || {};';
+    $js .= 'ASUHeader.site_menu.json = \''.json_encode($menu_array, JSON_HEX_APOS).'\';';
+    
+    drupal_add_js($js, array('type' => 'inline', 'scope' => 'header', 'group' => JS_THEME, 'weight' => -10));
+  }
+}
+
 
 /**
  * Implements hook_block_info().
@@ -75,6 +99,8 @@ function asu_brand_block_save($delta = '', $edit = array()) {
       variable_set('asu_brand_header_template', $edit['asu_brand_header_template']);
       variable_set('asu_brand_preview_pages', $edit['asu_brand_preview_pages']);
       variable_set('asu_brand_gtm_override', $edit['asu_brand_gtm_override']);
+      variable_set('asu_brand_sitemenu_injection_flag', $edit['asu_brand_sitemenu_injection_flag']);
+      variable_set('asu_brand_sitemenu_name', $edit['asu_brand_sitemenu_name']);
       asu_brand_cache_clear();
       break;
     
@@ -201,4 +227,62 @@ function asu_brand_is_preview_path($reset = FALSE) {
     }
   }
   return $page_match;
+}
+
+
+/**
+ * Returns site menu array
+ */
+function asu_brand_get_site_menu_array() {
+  $menu_tree = menu_tree_all_data(variable_get('asu_brand_sitemenu_name', ASU_BRAND_SITE_MENU_NAME_DEFAULT));
+  $menu_array = array();
+  $i=0;
+  foreach ($menu_tree as $item) {
+    if (isset($item['link']) && $item['link']['access'] && !$item['link']['hidden']) {
+      $menu_array[$i]['title'] = t(strip_tags(htmlspecialchars_decode($item['link']['title'])));
+      $menu_array[$i]['path'] = t($item['link']['link_path']);
+      $menu_array[$i]['options'] = t($item['link']['options']);
+      // Render child items.
+      if (asu_brand_menuitem_has_active_children($item)) {
+        $j=0;
+        foreach ($item['below'] as $child) {
+          if (isset($child['link']) && !$child['link']['hidden']) {
+            $menu_array[$i]['children'][$j]['title'] = t($child['link']['title']);
+            $menu_array[$i]['children'][$j]['path'] = t($child['link']['link_path']);
+            $menu_array[$i]['children'][$j]['options'] = t($child['link']['options']);
+            // Render grandchild items.
+            if (asu_brand_menuitem_has_active_children($child)) {
+              $k=0;
+              foreach ($child['below'] as $grandchild) {
+                if (isset($grandchild['link']) && !$grandchild['link']['hidden']) {
+                  $menu_array[$i]['children'][$j]['children'][$k]['title'] = t($grandchild['link']['title']);
+                  $menu_array[$i]['children'][$j]['children'][$k]['path'] = t($grandchild['link']['link_path']);
+                  $menu_array[$i]['children'][$j]['children'][$k]['options'] = t($grandchild['link']['options']);
+                  $k++;
+                }
+              }
+            }
+            $j++;
+          }
+        }
+      }
+      $i++;
+    }
+  }
+  return $menu_array;
+}
+
+
+/**
+ * Parses menuitem and returns true if there are active child menu items.
+ * @param array $menuitem
+ * @return boolean
+ */
+function asu_brand_menuitem_has_active_children($menuitem) {
+  if (is_array($menuitem) && isset($menuitem['below']) && !empty($menuitem['below'])) {
+    foreach ($menuitem['below'] as $child) {
+      if (isset($child['link']) && $child['link']['access'] && ($child['link']['hidden'] == 0)) return true;
+    }
+  }
+  return false;
 }
