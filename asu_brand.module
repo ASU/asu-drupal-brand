@@ -253,7 +253,7 @@ function asu_brand_get_site_menu_array() {
   foreach ($menu_tree as $item) {
     if (isset($item['link']) && $item['link']['access'] && !$item['link']['hidden']) {
       if ($menu_item = asu_brand_get_menu_item($item['link']['title'], $item['link']['link_path'], $item['link']['options'])) {
-        $menu_array[] = $menu_item;
+        $menu_array[$i] = $menu_item;
       } else {
         $i--;
       }
