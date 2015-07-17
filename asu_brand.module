@@ -253,7 +253,7 @@ function asu_brand_get_site_menu_array() {
   foreach ($menu_tree as $item) {
     if (isset($item['link']) && $item['link']['access'] && !$item['link']['hidden']) {
       if ($menu_item = asu_brand_get_menu_item($item['link']['title'], $item['link']['link_path'], $item['link']['options'])) {
-        $menu_array[$i] = $menu_item;
+        $menu_array[$i] = array_map('trim', $menu_item);
       } else {
         $i--;
       }
@@ -263,7 +263,7 @@ function asu_brand_get_site_menu_array() {
         foreach ($item['below'] as $child) {
           if (isset($child['link']) && !$child['link']['hidden']) {
             if ($menu_item = asu_brand_get_menu_item($child['link']['title'], $child['link']['link_path'], $child['link']['options'])) {
-              $menu_array[$i]['children'][$j] = $menu_item;
+              $menu_array[$i]['children'][$j] = array_map('trim', $menu_item);
             } else {
               $j--;
             }
@@ -273,7 +273,7 @@ function asu_brand_get_site_menu_array() {
               foreach ($child['below'] as $grandchild) {
                 if (isset($grandchild['link']) && !$grandchild['link']['hidden']) {
                   if ($menu_item = asu_brand_get_menu_item($grandchild['link']['title'], $grandchild['link']['link_path'], $grandchild['link']['options'])) {
-                    $menu_array[$i]['children'][$j]['children'][$k] = $menu_item;
+                    $menu_array[$i]['children'][$j]['children'][$k] = array_map('trim', $menu_item);
                   } else {
                     $k--;
                   }
@@ -288,6 +288,7 @@ function asu_brand_get_site_menu_array() {
       $i++;
     }
   }
+  dpm($menu_array);
   return $menu_array;
 }
 
