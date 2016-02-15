@@ -1,5 +1,12 @@
 CHANGELOG for ASU Brand module for Drupal 7
 
+
+7.x-1.12, 2016-02-15
+-----------------------
+- Shortened timeouts for http requests before falling back to long-term cache
+- Dropdown box in block configuration now shows the proper version
+
+
 7.x-1.9, 2015-05-06
 -----------------------
 - Updated default header version constant to 4.3
