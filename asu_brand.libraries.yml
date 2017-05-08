@@ -1,0 +1,15 @@
+header:
+  version: 4.5
+  header: true
+  css:
+    theme:
+      '//www.asu.edu/asuthemes/4.5/css/asu_header.min.css?v0.2': { type: external }
+      '//www.asu.edu/asuthemes/4.5/css/asu_header_media.min.css?v0.2': { type: external }
+      css/ie9.css: { browsers: { IE: 'IE 9', '!IE': false } }
+  js:
+    '//www.asu.edu/asuthemes/4.5/js/asu_header.min.js': { type: external }
+    js/asu_brand.js: {}
+  dependencies:
+        - core/jquery
+        - core/jquery.once
+        - core/drupal

@@ -1,6 +1,6 @@
-CHANGELOG for ASU Brand module for Drupal 7
+CHANGELOG for ASU Brand module for Drupal 7 and 8
 
-8.x-1.0, 2017-03-30
+8.x-1.0, 2017-??-??
 -----------------------
 - Port to Drupal 8.
 
