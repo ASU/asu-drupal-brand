@@ -74,8 +74,8 @@ class AsuBrandHeader extends AsuBrandBlockBase {
       $js_settings['asu_sso_signinurl'] = Url::fromUserInput($cas_sign_in_path, ['absolute' => TRUE])->toString();
       $js_settings['asu_sso_signouturl'] = Url::fromUserInput('/caslogout', ['absolute' => TRUE])->toString();
     } else {
-      $js_settings['asu_sso_signinurl'] = Url::fromUserInput('user/login', ['absolute' => TRUE])->toString();
-      $js_settings['asu_sso_signouturl'] = Url::fromUserInput('user/logout', ['absolute' => TRUE])->toString();
+      $js_settings['asu_sso_signinurl'] = Url::fromUserInput('/user/login', ['absolute' => TRUE])->toString();
+      $js_settings['asu_sso_signouturl'] = Url::fromUserInput('/user/logout', ['absolute' => TRUE])->toString();
     }
 
     return $js_settings;
