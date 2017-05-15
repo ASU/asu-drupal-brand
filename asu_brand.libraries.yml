@@ -8,7 +8,6 @@ header:
       css/ie9.css: { browsers: { IE: 'IE 9', '!IE': false } }
   js:
     '//www.asu.edu/asuthemes/4.6/js/asu_header.min.js': { type: external }
-    js/asu_brand.js: {}
   dependencies:
         - core/jquery
         - core/jquery.once
