@@ -1,9 +1,8 @@
 CHANGELOG for ASU Brand module for Drupal 7 and 8
 
-8.x-1.0, 2017-05-09??
+8.x-1.0-beta1, 2017-05-09??
 -----------------------
-- Partial port to Drupal 8.
-- Missing functionality: Menu injection, support for GTM, and log term caching.
+- Drupal 8 port.
 - The ability to switch between header versions was purposely removed in favor
   of releasing a new module update anytime a stable ASU Header version becomes
   available.
