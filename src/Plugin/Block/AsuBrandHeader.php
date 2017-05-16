@@ -24,6 +24,9 @@ class AsuBrandHeader extends AsuBrandBlockBase {
     return [
       'menu_injection_flag' => 1,
       'menu_name' => ASU_BRAND_SITE_MENU_NAME_DEFAULT,
+      'asu_gtm_on' => 0,
+      'custom_gtm_on' => 0,
+      'custom_gtm_id' => '',
       ] + parent::defaultConfiguration();
 
   }
@@ -59,7 +62,55 @@ class AsuBrandHeader extends AsuBrandBlockBase {
       ],
     ];
 
+    $form['gtm'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Google Tag Manager (GTM)'),
+      '#collapsed' => FALSE,
+      '#weight' => 4,
+    ];
+
+    $form['gtm']['asu_gtm'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Enable ASU GTM.'),
+      '#default_value' =>  $this->configuration['asu_gtm'],
+    ];
+
+    $form['gtm']['custom_gtm'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Use a custom GTM in addtion to or instead on ASU GTM.'),
+      '#default_value' =>  $this->configuration['custom_gtm'],
+    ];
+
+    $form['gtm']['custom_gtm_id'] = [
+      '#type' => 'textfield',
+      '#title' => t('Enter account Id for custom GTM.'),
+      '#default_value' =>  $this->configuration['custom_gtm_id'],
+      '#states' => [
+        'visible' => [
+          ':input[name="settings[gtm][custom_gtm]"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function blockValidate($form, FormStateInterface $form_state) {
+    $custom_gtm = $form_state->getValue(['gtm', 'custom_gtm']);
+    $custom_gtm_id = $form_state->getValue(['gtm', 'custom_gtm_id']);
+
+    if ($custom_gtm && empty($custom_gtm_id)) {
+      $form_state->setError($form['gtm']['custom_gtm_id'],
+        $this->t("Invalid GTM id. The custom GTM id can't be empty."));
+    }
+    else if($custom_gtm && !ctype_alnum(str_replace('-', '', $custom_gtm_id))) {
+      $form_state->setError($form['gtm']['custom_gtm_id'],
+        $this->t("Invalid GTM id. Only alphanumeric characters and a hyphen are allowed."));
+    }
+
   }
 
   /**
@@ -68,6 +119,9 @@ class AsuBrandHeader extends AsuBrandBlockBase {
   public function blockSubmit($form, FormStateInterface $form_state) {
     $this->configuration['menu_injection_flag'] = $form_state->getValue(['site_menu', 'menu_injection_flag']);
     $this->configuration['menu_name'] = $form_state->getValue(['site_menu', 'menu_name']);
+    $this->configuration['asu_gtm'] = $form_state->getValue(['gtm', 'asu_gtm']);
+    $this->configuration['custom_gtm'] = $form_state->getValue(['gtm', 'custom_gtm']);
+    $this->configuration['custom_gtm_id'] = $form_state->getValue(['gtm', 'custom_gtm_id']);
   }
 
   /**
@@ -90,6 +144,9 @@ class AsuBrandHeader extends AsuBrandBlockBase {
     $template_key = ASU_BRAND_HEADER_TEMPLATE_DEFAULT;
     $js_settings = $this->getJsSettings();
     $inject_menu = $this->configuration['menu_injection_flag'];
+    $asu_gtm = $this->configuration['asu_gtm'];
+    $custom_gtm = $this->configuration['custom_gtm'];
+    $custom_gtm_id = $this->configuration['custom_gtm_id'];
 
     $uri = "{$basepath}/{$version}/headers/{$template_key}.shtml";
 
@@ -101,31 +158,69 @@ class AsuBrandHeader extends AsuBrandBlockBase {
       [
         '#type' => 'html_tag',
         '#tag' => 'script',
-        '#value' => <<<EOL
-          var ASUHeader = ASUHeader || {};
-          ASUHeader.browser = false;
-          ASUHeader.user_signedin = {$js_settings['asu_sso_signedin']};
-          ASUHeader.signin_url = '{$js_settings['asu_sso_signinurl']}';
-          ASUHeader.signout_url = '{$js_settings['asu_sso_signouturl']}';
-EOL
+        '#value' => "
+var ASUHeader = ASUHeader || {};
+ASUHeader.browser = false;
+ASUHeader.user_signedin = {$js_settings['asu_sso_signedin']};
+ASUHeader.signin_url = '{$js_settings['asu_sso_signinurl']}';
+ASUHeader.signout_url = '{$js_settings['asu_sso_signouturl']}';
+",
       ],
-      'asu-brand-header-inject-header-js-settings',
+      'asu-brand-header-inject-js-settings',
     ];
 
+    // Inject mobile menu
     if ($inject_menu) {
       $menu_name = $this->configuration['menu_name'];
       $menu_items = $this->get_menu_items($menu_name);
       $site_name = \Drupal::config('system.site')->get('name');
-      $inject_menu_js = 'ASUHeader.site_menu = ASUHeader.site_menu || {};';
-      $inject_menu_js .= 'ASUHeader.site_menu.json = \''.json_encode($menu_items, JSON_HEX_APOS).'\';';
-      $inject_menu_js .= 'ASUHeader.site_menu.site_name = '.json_encode($site_name, JSON_HEX_APOS).';';
       $build['#attached']['html_head'][] = [
         [
           '#type' => 'html_tag',
           '#tag' => 'script',
-          '#value' => $inject_menu_js
+          '#value' => "
+ASUHeader.site_menu = ASUHeader.site_menu || {};
+ASUHeader.site_menu.json = '" . json_encode($menu_items, JSON_HEX_APOS) . "';
+ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "';
+",
         ],
-        'asu-brand-header-inject-menu',
+        'asu-brand-header-inject-mobile-menu',
+      ];
+    }
+
+    // Inject ASU GTM
+    if ($asu_gtm) {
+      $build['#attached']['html_head'][] = [
+        [
+          '#type' => 'html_tag',
+          '#tag' => 'script',
+          '#value' => "
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','SI_dataLayer','" . ASU_BRAND_GTM_ID . "');
+  ",
+        ],
+        'asu-brand-header-inject-asu-gtm',
+      ];
+    }
+
+    // Inject custom GTM
+    if ($custom_gtm) {
+      $build['#attached']['html_head'][] = [
+        [
+          '#type' => 'html_tag',
+          '#tag' => 'script',
+          '#value' => "
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','SI_dataLayer','" . $custom_gtm_id . "');
+  ",
+        ],
+        'asu-brand-header-inject-custom-gtm',
       ];
     }
 

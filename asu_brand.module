@@ -33,6 +33,11 @@ const ASU_BRAND_CACHE_LIFETIME = '172800';
 const ASU_BRAND_SITE_MENU_NAME_DEFAULT = 'main';
 
 /**
+ * Google Tag Manager ID
+ */
+const ASU_BRAND_GTM_ID = 'GTM-KDWN8Z';
+
+/**
  * Implements hook_help().
  */
 function asu_brand_help($route_name, RouteMatchInterface $route_match) {
@@ -48,3 +53,45 @@ function asu_brand_help($route_name, RouteMatchInterface $route_match) {
   }
 }
 
+/**
+ * Implements hook_page_top().
+ */
+function asu_brand_page_top(&$page) {
+  $content = '';
+
+  $current_theme = \Drupal::service('theme.manager')->getActiveTheme();
+
+  $blocks = \Drupal::entityTypeManager()
+    ->getStorage('block')
+    ->loadByProperties(['plugin' => 'asu_brand_header', 'theme' => $current_theme->getName()]);
+
+  foreach ($blocks as $id=>$block) {
+
+    $settings = $block->get('settings');
+
+    // Add noscript snippets to page_top region.
+    if ($settings['asu_gtm']) {
+      $content .= '<noscript><iframe src="//www.googletagmanager.com/ns.html?id=' . ASU_BRAND_GTM_ID .
+        '"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>';
+    }
+
+    if ($settings['custom_gtm']) {
+      $custom_gtm_id = $settings['custom_gtm_id'];
+      $content .= '<noscript><iframe src="//www.googletagmanager.com/ns.html?id=' . $custom_gtm_id .
+        '"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>';
+    }
+
+  }
+
+  // Render iframes as close to the opening body tag as possible.
+  if ($content) {
+    $page['asu_brand_gtm_code'] = [
+      '#type' => 'inline_template',
+      '#template' => '{{ html | raw }}',
+      '#context' => [
+        'html' => $content
+      ],
+      '#weight' => -100,
+    ];
+  }
+}
