@@ -24,8 +24,8 @@ class AsuBrandHeader extends AsuBrandBlockBase {
     return [
       'menu_injection_flag' => 1,
       'menu_name' => ASU_BRAND_SITE_MENU_NAME_DEFAULT,
-      'asu_gtm_on' => 0,
-      'custom_gtm_on' => 0,
+      'asu_gtm' => 0,
+      'custom_gtm' => 0,
       'custom_gtm_id' => '',
       ] + parent::defaultConfiguration();
 
