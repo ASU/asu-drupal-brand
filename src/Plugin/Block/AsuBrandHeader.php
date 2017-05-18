@@ -27,7 +27,7 @@ class AsuBrandHeader extends AsuBrandBlockBase {
       'asu_gtm' => 0,
       'custom_gtm' => 0,
       'custom_gtm_id' => '',
-      ] + parent::defaultConfiguration();
+    ] + parent::defaultConfiguration();
 
   }
 
@@ -57,7 +57,7 @@ class AsuBrandHeader extends AsuBrandBlockBase {
       '#default_value' => $this->configuration['menu_name'],
       '#states' => [
         'visible' => [
-            ':input[name="settings[site_menu][menu_injection_flag]"]' => ['checked' => TRUE],
+          ':input[name="settings[site_menu][menu_injection_flag]"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -332,26 +332,13 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
 
   /**
    * Compose and return menu item
-   *   Special handling for 'Special menu items' module
-   *   Return NULL for path if <nolink>
-   *   Return empty array if <separator>
+   *
    * @param array $item
    * @return array $menu_item
    */
   function get_menu_item($item) {
-    $route_name = $item['url']->getRouteName();
 
-    // NOTE: The Special Menu Items module from Drupal 7 has partially
-    // been moved to Drupal 8 core. As of Drupal 8.3.0, there is support for
-    // <nolink> (use route:<nolink> as the path), but there is no support for
-    // <separator>.
-    if($route_name == '<nolink>') {
-      $menu_item = ['title' => $item['title'], 'path' => ''];
-    }
-    else {
-      // <front> is automatically converted to '/'
-      $menu_item = ['title' => $item['title'], 'path' => $item['url']->toString()];
-    }
+    $menu_item = ['title' => $item['title'], 'path' => $item['url']->toString()];
 
     return $menu_item;
 
