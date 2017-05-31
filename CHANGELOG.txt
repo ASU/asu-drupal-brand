@@ -1,5 +1,11 @@
-CHANGELOG for ASU Brand module for Drupal 7
+CHANGELOG for ASU Brand module for Drupal 7 and 8
 
+8.x-1.0-beta1, 2017-05-09??
+-----------------------
+- Drupal 8 port.
+- The ability to switch between header versions was purposely removed in favor
+  of releasing a new module update anytime a stable ASU Header version becomes
+  available.
 
 7.x-1.12, 2016-02-15
 -----------------------
