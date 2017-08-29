@@ -12,3 +12,8 @@
 ### CAS Integration
 Install and enable the CAS module to allow users to create accounts and authenticate
 to your site via CAS.
+
+### CAS Configuration
+Use the following as your CAS configuration:
+
+![alt text](cas-configuration.png) 
