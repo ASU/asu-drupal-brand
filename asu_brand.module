@@ -83,7 +83,7 @@ function asu_brand_page_top(&$page) {
 
   }
 
-  // Render iframes as close to the opening body tag as possible.
+  // Render iframe as close to the opening body tag as possible.
   if ($content) {
     $page['asu_brand_gtm_code'] = [
       '#type' => 'inline_template',
