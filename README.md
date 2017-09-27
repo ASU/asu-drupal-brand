@@ -16,4 +16,4 @@ to your site via CAS.
 ### CAS Configuration
 Use the following as your CAS configuration:
 
-![alt text](cas-configuration.png) 
+![sample configuration](cas-configuration.png) 
