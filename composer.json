@@ -1,14 +1,14 @@
 {
-  "name": "drupal/asu_brand",
+  "name": "asu/asu_brand",
   "type": "drupal-module",
   "description": "Provides ASU header and footer blocks without the use of an ASU based theme.",
   "keywords": ["Drupal"],
   "license": "GPL-2.0+",
-  "homepage": "https://www.drupal.org/project/asu_brand",
+  "homepage": "https://github.com/ASU/asu-drupal-brand",
   "minimum-stability": "dev",
   "support": {
-    "issues": "https://www.drupal.org/project/issues/asu_brand",
-    "source": "http://cgit.drupalcode.org/asu_brand"
+    "issues": "https://github.com/ASU/asu-drupal-brand/issues",
+    "source": "https://github.com/ASU/asu-drupal-brand"
   },
   "require": { }
 }
