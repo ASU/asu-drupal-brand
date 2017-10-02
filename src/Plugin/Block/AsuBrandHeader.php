@@ -53,7 +53,7 @@ class AsuBrandHeader extends AsuBrandBlockBase {
       '#type' => 'select',
       '#title' => t('Menu to inject'),
       '#description' => t('Select the site menu to inject.'),
-      '#options' => $this->get_menus(),
+      '#options' => $this->getMenus(),
       '#default_value' => $this->configuration['menu_name'],
       '#states' => [
         'visible' => [
@@ -106,7 +106,7 @@ class AsuBrandHeader extends AsuBrandBlockBase {
       $form_state->setError($form['gtm']['custom_gtm_id'],
         $this->t("Invalid GTM id. The custom GTM id can't be empty."));
     }
-    else if($custom_gtm && !ctype_alnum(str_replace('-', '', $custom_gtm_id))) {
+    elseif ($custom_gtm && !ctype_alnum(str_replace('-', '', $custom_gtm_id))) {
       $form_state->setError($form['gtm']['custom_gtm_id'],
         $this->t("Invalid GTM id. Only alphanumeric characters and a hyphen are allowed."));
     }
@@ -139,96 +139,33 @@ class AsuBrandHeader extends AsuBrandBlockBase {
    */
   public function build() {
 
-    $basepath = ASU_BRAND_HEADER_BASEPATH_DEFAULT;
-    $version = ASU_BRAND_HEADER_VERSION_DEFAULT;
-    $template_key = ASU_BRAND_HEADER_TEMPLATE_DEFAULT;
-    $js_settings = $this->getJsSettings();
-    $inject_menu = $this->configuration['menu_injection_flag'];
-    $asu_gtm = $this->configuration['asu_gtm'];
-    $custom_gtm = $this->configuration['custom_gtm'];
-    $custom_gtm_id = $this->configuration['custom_gtm_id'];
-
-    $uri = "{$basepath}/{$version}/headers/{$template_key}.shtml";
-
-    // Load CSS and JS header assets from www.asu.edu/asuthemes.
     $build['#attached']['library'][] = 'asu_brand/header';
 
     // Inject inline javascript settings for ASUHeader.
-    $build['#attached']['html_head'][] = [
-      [
-        '#type' => 'html_tag',
-        '#tag' => 'script',
-        '#value' => "
-var ASUHeader = ASUHeader || {};
-ASUHeader.browser = false;
-ASUHeader.user_signedin = {$js_settings['asu_sso_signedin']};
-ASUHeader.signin_url = '{$js_settings['asu_sso_signinurl']}';
-ASUHeader.signout_url = '{$js_settings['asu_sso_signouturl']}';
-",
-      ],
-      'asu-brand-header-inject-js-settings',
-    ];
+    $build['#attached']['html_head'][] = $this->getHeaderJs('asu-brand-header-inject-js-settings');
 
     // Inject mobile menu
-    if ($inject_menu) {
-      $menu_name = $this->configuration['menu_name'];
-      $menu_items = $this->get_menu_items($menu_name);
-      $site_name = \Drupal::config('system.site')->get('name');
-      $build['#attached']['html_head'][] = [
-        [
-          '#type' => 'html_tag',
-          '#tag' => 'script',
-          '#value' => "
-ASUHeader.site_menu = ASUHeader.site_menu || {};
-ASUHeader.site_menu.json = '" . json_encode($menu_items, JSON_HEX_APOS) . "';
-ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "';
-",
-        ],
-        'asu-brand-header-inject-mobile-menu',
-      ];
+    if ($this->configuration['menu_injection_flag']) {
+      $build['#attached']['html_head'][] = $this->getMobileMenuJs( 'asu-brand-header-inject-mobile-menu');
     }
 
     // Inject ASU GTM
-    if ($asu_gtm) {
-      $build['#attached']['html_head'][] = [
-        [
-          '#type' => 'html_tag',
-          '#tag' => 'script',
-          '#value' => "
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','SI_dataLayer','" . ASU_BRAND_GTM_ID . "');
-  ",
-        ],
-        'asu-brand-header-inject-asu-gtm',
-      ];
+    if ($this->configuration['asu_gtm']) {
+      $build['#attached']['html_head'][] = $this->getGtmJs('asu-brand-header-inject-asu-gtm', ASU_BRAND_GTM_ID);
     }
 
     // Inject custom GTM
-    if ($custom_gtm) {
-      $build['#attached']['html_head'][] = [
-        [
-          '#type' => 'html_tag',
-          '#tag' => 'script',
-          '#value' => "
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','SI_dataLayer','" . $custom_gtm_id . "');
-  ",
-        ],
-        'asu-brand-header-inject-custom-gtm',
-      ];
+    if ($this->configuration['custom_gtm']) {
+      $custom_gtm_id= $this->configuration['custom_gtm_id'];
+      $build['#attached']['html_head'][] = $this->getGtmJs('asu-brand-header-inject-custom-gtm', $custom_gtm_id);
     }
 
+    // Header HTML code
     $build['header'] = [
       '#type' => 'inline_template',
       '#template' => '{{ html | raw }}',
       '#context' => [
-        'html' => $this->fetchExternalMarkUp($uri),
+        'html' => $this->fetchExternalMarkUp($this->getHeaderUri()),
       ]
     ];
 
@@ -237,8 +174,14 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
 
   /**
    * Get ASU brand block settings.
+   *
+   * NOTE: Since we're currently relying on Drupal core's Dynamic Page Cache module
+   * (enabled by default in most sites) to cache ASU Brand blocks, appending a destination query
+   * to the Sing In path won't work correctly. This is because the path with
+   * the destination query will be cached, and it will be the same on all pages,
+   * which is not desired.
    */
-  private function getJsSettings() {
+  private function getJsSsoSettings() {
 
     $is_user_logged_in = TRUE;
     $moduleHandler = \Drupal::service('module_handler');
@@ -254,18 +197,13 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
       'asu_sso_signouturl' => '',
     ];
 
-    // NOTE: Since we're currently relying on Drupal core's Dynamic Page Cache module
-    // (enabled by default in most sites) to cache ASU Brand blocks, appending a destination query
-    // to the Sing In path won't work correctly. This is because the path with
-    // the destination query will be cached, and it will be the same on all pages,
-    // which is not desired.
-
     // Alter the signin/signout URL if cas is enabled.
     if ($moduleHandler->moduleExists('cas')){
       $cas_sign_in_path = \Drupal::config('cas.settings')->get('server.path');
       $js_settings['asu_sso_signinurl'] = Url::fromUserInput($cas_sign_in_path, ['absolute' => TRUE, 'https' => TRUE])->toString();
       $js_settings['asu_sso_signouturl'] = Url::fromUserInput('/caslogout', ['absolute' => TRUE])->toString();
-    } else {
+    }
+    else {
       $js_settings['asu_sso_signinurl'] = Url::fromUserInput('/user/login', ['absolute' => TRUE])->toString();
       $js_settings['asu_sso_signouturl'] = Url::fromUserInput('/user/logout', ['absolute' => TRUE])->toString();
     }
@@ -278,7 +216,7 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
    *
    * @return array Associative array of menus.
    */
-  private function get_menus() {
+  private function getMenus() {
     $all_menus = Menu::loadMultiple();
     $menus = [];
     foreach ($all_menus as $id => $menu) {
@@ -294,13 +232,19 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
    * @param string $menu_name Menu machine name.
    * @return array Associative array of menu items.
    */
-  private function get_menu_items($menu_name) {
+  private function getMenuItems($menu_name) {
+
+    $menu = [];
+
     $menu_tree = \Drupal::menuTree();
+
     // Build the typical default set of menu tree parameters.
     $parameters = new MenuTreeParameters();
     $parameters->setMaxDepth(3);
+
     // Load the tree based on this set of parameters.
     $tree = $menu_tree->load($menu_name, $parameters);
+
     // Transform the tree using the manipulators you want.
     $manipulators = [
       // Only show links that are accessible for the current user.
@@ -309,17 +253,18 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
       ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
     ];
     $tree = $menu_tree->transform($tree, $manipulators);
+
     // Finally, build a renderable array from the transformed tree.
     $menu_tmp = $menu_tree->build($tree);
-    $menu = [];
+
     foreach ($menu_tmp['#items'] as $item) {
-      $top_level = $this->get_menu_item($item);
+      $top_level = $this->getMenuItem($item);
       if (!empty($item['below'])) {
         foreach ($item['below'] as $child) {
-          $second_level = $this->get_menu_item($child);
+          $second_level = $this->getMenuItem($child);
           if (!empty($child['below'])) {
             foreach ($child['below'] as $grandchild) {
-              $second_level['children'][] = $this->get_menu_item($grandchild);
+              $second_level['children'][] = $this->getMenuItem($grandchild);
             }
           }
           $top_level['children'][] = $second_level;
@@ -327,6 +272,7 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
       }
       $menu[] = $top_level;
     }
+
     return $menu;
   }
 
@@ -336,12 +282,83 @@ ASUHeader.site_menu.site_name = '" . json_encode($site_name, JSON_HEX_APOS) . "'
    * @param array $item
    * @return array $menu_item
    */
-  function get_menu_item($item) {
+  private function getMenuItem($item) {
 
-    $menu_item = ['title' => $item['title'], 'path' => $item['url']->toString()];
+    return [
+      'title' => $item['title'],
+      'path' => $item['url']->toString(),
+    ];
 
-    return $menu_item;
+  }
+
+  private function getHeaderUri() {
+
+    $basepath = ASU_BRAND_HEADER_BASEPATH_DEFAULT;
+    $version = ASU_BRAND_HEADER_VERSION_DEFAULT;
+    $template_key = ASU_BRAND_HEADER_TEMPLATE_DEFAULT;
+
+    return "{$basepath}/{$version}/headers/{$template_key}.shtml";
+
+  }
+
+  private function getScriptTag($render_key, $js) {
+
+    return [
+      [
+        '#type' => 'html_tag',
+        '#tag' => 'script',
+        '#value' => $js,
+      ],
+      $render_key,
+    ];
+
+  }
+
+  private function getHeaderJs($render_key) {
+
+    $js_settings = $this->getJsSsoSettings();
+
+    $js = <<<STRING
+var ASUHeader = ASUHeader || {};
+ASUHeader.browser = false;
+ASUHeader.user_signedin = {$js_settings['asu_sso_signedin']};
+ASUHeader.signin_url = '{$js_settings['asu_sso_signinurl']}';
+ASUHeader.signout_url = '{$js_settings['asu_sso_signouturl']}';
+STRING;
+
+    return $this->getScriptTag($render_key, $js);
+
+  }
+
+  private function getMobileMenuJs($render_key) {
+
+    $menu_name = $this->configuration['menu_name'];
+    $menu_items = json_encode($this->getMenuItems($menu_name), JSON_HEX_APOS);
+    $site_name = json_encode(\Drupal::config('system.site')->get('name'), JSON_HEX_APOS);
+
+    $js = <<<STRING
+ASUHeader.site_menu = ASUHeader.site_menu || {};
+ASUHeader.site_menu.json = '{$menu_items}';
+ASUHeader.site_menu.site_name = '{$site_name}';
+STRING;
+
+    return $this->getScriptTag($render_key, $js);
+
+  }
+
+  private function getGtmJs($render_key, $gtm_id) {
+
+    $js = <<<STRING
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','{$gtm_id}');
+STRING;
+
+    return $this->getScriptTag($render_key, $js);
 
   }
 
 }
+
