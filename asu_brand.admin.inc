@@ -93,6 +93,27 @@ function asu_brand_get_block_configure_form($delta) {
           '#description' => t('This script should be provided by the ASU google Analytics Administrator.'),
       );
 
+
+      $form['asu_brand']['do_not_override'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Do Not Override Login URL'),
+      '#description' => t('If host is added to list, the brand module will not override the login URL with the CAS module path.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      );
+
+      // format our do not override list array as a comma-delimted list in the form field, for easy editing
+      $overrides = drupal_json_decode(variable_get('asu_brand_do_not_override', '["www.asu.edu"]'));
+      $fstring = implode(', ', $overrides);
+
+      $form['asu_brand']['do_not_override']['asu_brand_do_not_override'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Do Not Override List'),
+        '#description' => t('Add hosts to list, separated by commas.'),
+        '#default_value' => $fstring,
+      );
+
+
       break;
       
       case 'asu_brand_footer':
