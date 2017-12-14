@@ -142,7 +142,30 @@ function asu_brand_head_inject() {
   $settings->js_settings['overrides'] = $overrides;
   $head_output =  asu_brand_get_cached_content($cache_id, $settings->head_path);
 
+  // Inject header javascript into <head> and set the weight to a high negative value.
+  $asu_sso_signedin = $settings->js_settings['asu_sso_signedin'];
+  $asu_sso_signinurl = $settings->js_settings['asu_sso_signinurl'];
+  $asu_sso_signouturl = $settings->js_settings['asu_sso_signouturl'];
+
+
+  $inline_script = <<<EOL
+   <script type="text/javascript">
+    <!--//--><![CDATA[//><!--
+    
+    var overrides = $overrides;
+    var hostname = window.location.hostname;
+    var ASUHeader = ASUHeader || {};
+    
+    if (overrides.indexOf(hostname) == -1) {  
+        ASUHeader.signout_url = "$asu_sso_signouturl";
+    }
+       
+    //--><!]]>
+  </script>
+EOL;
+
   drupal_add_js(array('asu_brand' => $settings->js_settings), 'setting');
   drupal_add_js(drupal_get_path('module', 'asu_brand') . '/asu_brand.js', array());
+  drupal_add_html_head(array('#type' => 'markup', '#markup' => $inline_script, '#weight' => -100), 'asu_brand_head_js');
   drupal_add_html_head(array('#type' => 'markup', '#markup' => $head_output, '#weight' => -99), 'asu_brand_head');
 }
